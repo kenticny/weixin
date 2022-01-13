@@ -189,8 +189,9 @@ type MenuButton struct {
 	Name       string       `json:"name"`
 	Type       string       `json:"type,omitempty"`
 	Key        string       `json:"key,omitempty"`
-	Url        string       `json:"url,omitempty"`      // nolint
-	MediaId    string       `json:"media_id,omitempty"` // nolint
+	Url        string       `json:"url,omitempty"`        // nolint
+	MediaId    string       `json:"media_id,omitempty"`   // nolint
+	ArticleId  string       `json:"article_id,omitempty"` // nolint
 	SubButtons []MenuButton `json:"sub_button,omitempty"`
 	AppId      string       `json:"appid,omitempty"` // nolint
 	PagePath   string       `json:"pagepath,omitempty"`
