@@ -350,6 +350,7 @@ type Weixin struct {
 	refreshToken   int32
 	encodingAESKey []byte
 	cacheStore     CacheStore
+	defaultHandler HandlerFunc
 }
 
 // ToURL convert qr scene to url.
@@ -365,6 +366,7 @@ func New(token string, appid string, secret string, cacheStore CacheStore) *Weix
 	wx.appSecret = secret
 	wx.refreshToken = 0
 	wx.encodingAESKey = []byte{}
+	wx.defaultHandler = nil
 
 	if cacheStore == nil {
 		cacheStore = NewMemoryCacheStore()
@@ -432,6 +434,10 @@ func (wx *Weixin) HandleFunc(pattern string, handler HandlerFunc) {
 	}
 	route := &route{regex, handler}
 	wx.routes = append(wx.routes, route)
+}
+
+func (wx *Weixin) SetDefaultHandler(fn HandlerFunc) {
+	wx.defaultHandler = fn
 }
 
 // PostText used to post text message.
@@ -920,18 +926,25 @@ func (wx *Weixin) routeRequest(w http.ResponseWriter, r *Request) {
 	if requestPath == msgEvent {
 		requestPath += "." + r.Event
 	}
+	writer := responseWriter{}
+	writer.wx = wx
+	writer.writer = w
+	writer.toUserName = r.FromUserName
+	writer.fromUserName = r.ToUserName
+
 	for _, route := range wx.routes {
 		if !route.regex.MatchString(requestPath) {
 			continue
 		}
-		writer := responseWriter{}
-		writer.wx = wx
-		writer.writer = w
-		writer.toUserName = r.FromUserName
-		writer.fromUserName = r.ToUserName
 		route.handler(writer, r)
 		return
 	}
+
+	if wx.defaultHandler != nil {
+		wx.defaultHandler(writer, r)
+		return
+	}
+
 	http.Error(w, "", http.StatusNotFound)
 	return
 }
